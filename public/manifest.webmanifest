@@ -1,0 +1,10 @@
+{
+  "name": "Finance Entry",
+  "short_name": "Finance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "description": "Quickly add expenses to Google Sheets, works offline.",
+  "icons": []
+}

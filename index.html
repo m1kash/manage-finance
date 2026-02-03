@@ -9,32 +9,86 @@
     <meta name="theme-color" content="#4f46e5" />
     <link rel="manifest" href="./manifest.webmanifest" />
   </head>
-  <body class="bg-gray-50 text-gray-900">
+  <body class="bg-brand-bg text-gray-900 dark:bg-gray-900 dark:text-gray-100 [data-theme=bright]:bg-white">
+    <div id="toaster" class="fixed top-4 right-4 z-50 space-y-2" aria-live="polite" aria-atomic="true"></div>
     <div class="min-h-screen flex items-center justify-center p-6">
       <div class="w-full container-narrow">
-        <div class="bg-white shadow rounded-lg p-6 border border-gray-100">
-          <h1 class="text-2xl font-semibold mb-4">Add Expense</h1>
-          <form id="form" class="space-y-4">
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-100 dark:border-gray-700">
+          <div class="px-6 pt-6 pb-2 flex items-start justify-between gap-4">
             <div>
-              <label for="category" class="block text-sm font-medium mb-1">Category</label>
-              <select id="category" class="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                <option disabled selected>Loading…</option>
-              </select>
+              <h1 class="text-2xl font-semibold">Add Expense</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Log a new expense. Date defaults to today. All fields are required.</p>
             </div>
-
-            <div>
-              <label for="date" class="block text-sm font-medium mb-1">Date</label>
-              <input id="date" type="date" class="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" />
-            </div>
-
-            <div>
-              <label for="sum" class="block text-sm font-medium mb-1">Sum</label>
-              <input id="sum" type="number" step="0.01" inputmode="decimal" class="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="0.00" />
-            </div>
-
-            <button id="submitBtn" type="submit" class="w-full inline-flex justify-center items-center gap-2 rounded bg-indigo-600 text-white px-4 py-2 hover:bg-indigo-700 disabled:opacity-60">
-              Submit
+            <button id="themeToggle" type="button" class="inline-flex items-center gap-2 rounded-md px-3 py-2 outline-1 -outline-offset-1 outline-gray-300 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600 dark:outline-white/10 dark:hover:bg-white/5 dark:focus-visible:outline-indigo-500" aria-pressed="false" aria-label="Toggle dark mode">
+              <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-gray-700 dark:text-gray-200">
+                <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0 4a1 1 0 0 1-1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1ZM5 12a1 1 0 0 1-1 1H3a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm17 1h-1a1 1 0 1 1 0-2h1a1 1 0 1 1 0 2ZM5.636 19.778a1 1 0 0 1-1.414 0l-.707-.707a1 1 0 0 1 1.414-1.414l.707.707a1 1 0 0 1 0 1.414Zm0-13.556a1 1 0 0 1-1.414-1.414l.707-.707a1 1 0 1 1 1.414 1.414l-.707.707Zm13.728 13.556a1 1 0 0 1 0-1.414l.707-.707a1 1 0 1 1 1.414 1.414l-.707.707a1 1 0 0 1-1.414 0Zm0-13.556-.707-.707a1 1 0 0 1 1.414-1.414l.707.707a1 1 0 1 1-1.414 1.414Z"/>
+              </svg>
+              <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-gray-700 dark:text-gray-200 hidden">
+                <path d="M21.752 15.002A9 9 0 0 1 9.002 2.252a.75.75 0 0 0-.966-.966 10.5 10.5 0 1 0 12.682 12.682.75.75 0 0 0-.966-.966Z"/>
+              </svg>
+              <span class="sr-only">Toggle theme</span>
             </button>
+          </div>
+          <form id="form" class="divide-y divide-gray-200 dark:divide-gray-700" novalidate>
+            <!-- Category row -->
+            <div class="px-6 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-6">
+              <label for="category" class="block text-sm font-medium leading-6 sm:pt-2">Category</label>
+              <div class="mt-2 sm:mt-0 sm:col-span-2">
+                <div class="max-w-md">
+                  <div class="grid grid-cols-1">
+                    <select id="category" required autocomplete="off" class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-brand-bg py-1.5 pr-8 pl-3 text-base text-gray-900 ring-1 ring-inset ring-brand-ring focus:ring-2 focus:ring-brand-focus sm:text-sm/6 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:focus:ring-indigo-500 [data-theme=bright_&]:bg-brand-bgBright [data-theme=bright_&]:ring-brand-ringBright [data-theme=bright_&]:focus:ring-brand-focusBright">
+                      <option disabled selected>Loading…</option>
+                    </select>
+                    <svg viewBox="0 0 16 16" fill="currentColor" data-slot="icon" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-brand-muted sm:size-4 dark:text-gray-400 [data-theme=bright_&]:text-brand-mutedBright">
+                      <path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" fill-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                <p id="error-category" class="mt-2 text-sm text-red-600 hidden">Please select a category.</p>
+              </div>
+            </div>
+
+            <!-- Date row -->
+            <div class="px-6 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-6">
+              <label for="date" class="block text-sm font-medium leading-6 sm:pt-2">Date</label>
+              <div class="mt-2 sm:mt-0 sm:col-span-2">
+                <div class="max-w-md">
+                  <div class="flex items-center rounded-md pl-3 bg-brand-bg ring-1 ring-inset ring-brand-ring focus-within:ring-2 focus-within:ring-brand-focus dark:bg-white/5 dark:ring-white/10 dark:focus-within:ring-indigo-500 [data-theme=bright_&]:bg-brand-bgBright [data-theme=bright_&]:ring-brand-ringBright [data-theme=bright_&]:focus-within:ring-brand-focusBright">
+                    <div class="shrink-0 text-base text-brand-muted select-none sm:text-sm/6 dark:text-gray-400 [data-theme=bright_&]:text-brand-mutedBright"></div>
+                    <input id="date" type="date" name="date" autocomplete="off" class="block min-w-0 grow bg-transparent py-1.5 pr-3 pl-1 text-base text-brand-text placeholder:text-brand-muted/70 focus:outline-none sm:text-sm/6 dark:bg-transparent dark:text-white dark:placeholder:text-gray-500 [data-theme=bright_&]:text-brand-textBright [data-theme=bright_&]:placeholder:text-brand-mutedBright/70" />
+                  </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">If empty, today will be used.</p>
+              </div>
+            </div>
+
+            <!-- Amount/Price row -->
+            <div class="px-6 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-6">
+              <label for="sum" class="block text-sm font-medium leading-6 sm:pt-2">Price</label>
+              <div class="mt-2 sm:mt-0 sm:col-span-2">
+                <div class="max-w-md">
+                  <div class="flex items-center rounded-md pl-3 bg-brand-bg ring-1 ring-inset ring-brand-ring focus-within:ring-2 focus-within:ring-brand-focus dark:bg-white/5 dark:ring-white/10 dark:focus-within:ring-indigo-500 [data-theme=bright_&]:bg-brand-bgBright [data-theme=bright_&]:ring-brand-ringBright [data-theme=bright_&]:focus-within:ring-brand-focusBright">
+                    <div class="shrink-0 text-base text-brand-muted select-none sm:text-sm/6 dark:text-gray-400 [data-theme=bright_&]:text-brand-mutedBright">zł</div>
+                    <input id="sum" name="sum" type="number" step="0.01" min="0.01" inputmode="decimal" required placeholder="0.00" class="block min-w-0 grow bg-transparent py-1.5 pr-3 pl-1 text-base text-brand-text placeholder:text-brand-muted/70 focus:outline-none sm:text-sm/6 dark:bg-transparent dark:text-white dark:placeholder:text-gray-500 [data-theme=bright_&]:text-brand-textBright [data-theme=bright_&]:placeholder:text-brand-mutedBright/70" aria-label="Amount in PLN" />
+                  </div>
+                </div>
+                <div class="mt-1 flex"><span class="text-xs text-gray-500 dark:text-gray-400">Use dot or comma as decimal</span></div>
+                <p id="error-sum" class="mt-2 text-sm text-red-600 hidden">Enter a valid amount greater than 0.</p>
+              </div>
+            </div>
+
+            <!-- Submit row -->
+            <div class="px-6 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-6">
+              <div class="sm:col-start-2 sm:col-span-2">
+                <button id="submitBtn" type="submit" class="inline-flex justify-center items-center gap-2 rounded bg-indigo-600 text-white px-4 py-2 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed [data-theme=bright_&]:bg-indigo-600 [data-theme=bright_&]:hover:bg-indigo-500">
+                  <svg id="btnSpinner" class="h-5 w-5 animate-spin hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  <span id="btnText">Submit</span>
+                </button>
+              </div>
+            </div>
           </form>
         </div>
       </div>

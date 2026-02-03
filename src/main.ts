@@ -6,6 +6,91 @@ type FormDataPayload = {
 
 const $ = (sel: string) => document.querySelector(sel) as HTMLElement | null;
 
+// ---- Theme (light/dark) toggle ----
+const THEME_STORAGE_KEY = 'theme_pref_v1';
+type Theme = 'light' | 'dark';
+
+function prefersDark(): boolean {
+  try {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch {
+    return false;
+  }
+}
+
+function getStoredTheme(): Theme | null {
+  try {
+    const v = localStorage.getItem(THEME_STORAGE_KEY);
+    if (v === 'light' || v === 'dark') return v;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredTheme(theme: Theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // ignore
+  }
+}
+
+function applyTheme(theme: Theme) {
+  const isDark = theme === 'dark';
+  const root = document.documentElement;
+  root.classList.toggle('dark', isDark);
+  // When switching to light, enable a brighter day theme via data attribute on <body>
+  const body = document.body;
+  if (isDark) {
+    body.removeAttribute('data-theme');
+  } else {
+    body.setAttribute('data-theme', 'bright');
+  }
+  const toggleBtn = document.getElementById('themeToggle') as HTMLButtonElement | null;
+  const iconSun = document.getElementById('iconSun');
+  const iconMoon = document.getElementById('iconMoon');
+  if (toggleBtn) toggleBtn.setAttribute('aria-pressed', String(isDark));
+  if (iconSun && iconMoon) {
+    if (isDark) {
+      iconSun.classList.add('hidden');
+      iconMoon.classList.remove('hidden');
+    } else {
+      iconSun.classList.remove('hidden');
+      iconMoon.classList.add('hidden');
+    }
+  }
+}
+
+function initTheme() {
+  const stored = getStoredTheme();
+  const initial: Theme = stored ?? (prefersDark() ? 'dark' : 'light');
+  applyTheme(initial);
+
+  const toggleBtn = document.getElementById('themeToggle');
+  toggleBtn?.addEventListener('click', () => {
+    const nowDark = document.documentElement.classList.contains('dark');
+    const next: Theme = nowDark ? 'light' : 'dark';
+    setStoredTheme(next);
+    applyTheme(next);
+  });
+
+  // If user hasn't set a preference, follow system changes dynamically
+  if (!stored && window.matchMedia) {
+    try {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = (e: MediaQueryListEvent) => applyTheme(e.matches ? 'dark' : 'light');
+      // Modern browsers: addEventListener
+      if (typeof mq.addEventListener === 'function') {
+        mq.addEventListener('change', handler);
+      } else if (typeof (mq as any).addListener === 'function') {
+        // Safari <14
+        (mq as any).addListener(handler);
+      }
+    } catch {}
+  }
+}
+
 function formatToday(): string {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -15,21 +100,53 @@ function formatToday(): string {
 }
 
 function setLoading(loading: boolean) {
-  const btn = $("#submitBtn") as HTMLButtonElement | null;
-  if (btn) {
-    btn.disabled = loading;
-    btn.innerText = loading ? 'Saving…' : 'Submit';
+  const btn = document.getElementById('submitBtn') as HTMLButtonElement | null;
+  const spinner = document.getElementById('btnSpinner');
+  const btnText = document.getElementById('btnText');
+  const form = document.getElementById('form') as HTMLFormElement | null;
+  if (btn) btn.disabled = loading;
+  if (spinner) spinner.classList.toggle('hidden', !loading);
+  if (btnText) btnText.textContent = loading ? 'Saving…' : 'Submit';
+  if (form) {
+    form.setAttribute('aria-busy', loading ? 'true' : 'false');
+    const fields = form.querySelectorAll('input, select, button');
+    fields.forEach((el) => {
+      if (el.id !== 'submitBtn') (el as HTMLInputElement | HTMLSelectElement | HTMLButtonElement).disabled = loading;
+    });
   }
 }
 
 function notify(message: string, type: 'success' | 'error' = 'success') {
-  const box = document.createElement('div');
-  box.className = `fixed top-4 right-4 px-4 py-2 rounded text-white shadow ${
-    type === 'success' ? 'bg-green-600' : 'bg-red-600'
+  const container = document.getElementById('toaster');
+  const toast = document.createElement('div');
+  toast.setAttribute('role', 'alert');
+  toast.className = `px-4 py-2 rounded text-white shadow border ${
+    type === 'success'
+      ? 'bg-green-600 border-green-700'
+      : 'bg-red-600 border-red-700'
   }`;
-  box.textContent = message;
-  document.body.appendChild(box);
-  setTimeout(() => box.remove(), 3500);
+  toast.textContent = message;
+  if (container) {
+    container.appendChild(toast);
+  } else {
+    // fallback
+    toast.classList.add('fixed', 'top-4', 'right-4');
+    document.body.appendChild(toast);
+  }
+  setTimeout(() => toast.remove(), 3500);
+}
+
+function clearFieldError(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
+function showFieldError(id: string, msg?: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    if (msg) el.textContent = msg;
+    el.classList.remove('hidden');
+  }
 }
 
 function populateDateDefault() {
@@ -307,17 +424,34 @@ async function flushQueue() {
 
 function handleSubmit(e: Event) {
   e.preventDefault();
-  const category = (document.getElementById('category') as HTMLSelectElement | null)?.value || '';
-  const date = (document.getElementById('date') as HTMLInputElement | null)?.value || '';
-  const sumStr = (document.getElementById('sum') as HTMLInputElement | null)?.value || '';
+  const categoryEl = document.getElementById('category') as HTMLSelectElement | null;
+  const dateEl = document.getElementById('date') as HTMLInputElement | null;
+  const sumEl = document.getElementById('sum') as HTMLInputElement | null;
 
+  // clear previous errors
+  clearFieldError('error-category');
+  clearFieldError('error-sum');
+  categoryEl?.classList.remove('border-red-500');
+  sumEl?.classList.remove('border-red-500');
+
+  const category = categoryEl?.value || '';
+  const date = dateEl?.value || '';
+  const sumStr = sumEl?.value || '';
+
+  let firstInvalid: HTMLElement | null = null;
   if (!category) {
-    notify('Please select a category', 'error');
-    return;
+    showFieldError('error-category');
+    categoryEl?.classList.add('border-red-500');
+    firstInvalid = firstInvalid || categoryEl;
   }
-  const sum = Number(sumStr);
-  if (!sumStr || Number.isNaN(sum)) {
-    notify('Please enter a valid sum', 'error');
+  const sum = Number(sumStr.replace(',', '.'));
+  if (!sumStr || Number.isNaN(sum) || sum <= 0) {
+    showFieldError('error-sum');
+    sumEl?.classList.add('border-red-500');
+    firstInvalid = firstInvalid || sumEl;
+  }
+  if (firstInvalid) {
+    firstInvalid.focus();
     return;
   }
 
@@ -329,6 +463,8 @@ function handleSubmit(e: Event) {
     notify('Saved successfully');
     (document.getElementById('form') as HTMLFormElement | null)?.reset();
     populateDateDefault();
+    // focus first field for quick entry
+    (document.getElementById('category') as HTMLSelectElement | null)?.focus();
   };
 
   const onQueued = () => {
@@ -358,6 +494,8 @@ function handleSubmit(e: Event) {
 }
 
 async function boot() {
+  // Initialize theme toggle first so UI paints in the correct mode
+  initTheme();
   populateDateDefault();
   loadCategories();
   const form = document.getElementById('form') as HTMLFormElement | null;

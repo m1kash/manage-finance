@@ -325,6 +325,21 @@ async function appendTransactionToDB(payload: FormDataPayload): Promise<void> {
   const dateStr = (payload.date && payload.date.trim()) || formatToday();
   const category = payload.category;
   const sum = payload.sum;
+
+  // Normalize date for Google Sheets to avoid locale/timezone misinterpretation.
+  // Use a DATE() formula so the exact Y/M/D lands correctly regardless of sheet locale.
+  // Expected input from <input type="date"> is YYYY-MM-DD.
+  let dateCellValue: string | number = dateStr;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    // Use USER_ENTERED so formula evaluates into a date cell.
+    // Some locales (e.g., many European locales) require semicolons as argument separators in formulas.
+    // Emit with semicolons to avoid locale-dependent formula errors like "FORMULA ERROR =DATE(2026,2,26)".
+    dateCellValue = `=DATE(${y};${mo};${d})`;
+  }
   // Acquire/refresh token with write scope
   const token = await getAccessToken();
   const range = encodeURIComponent('DB'); // target sheet name; append decides position
@@ -337,7 +352,7 @@ async function appendTransactionToDB(payload: FormDataPayload): Promise<void> {
     },
     body: JSON.stringify({
       majorDimension: 'ROWS',
-      values: [[dateStr, category, sum]],
+      values: [[dateCellValue, category, sum]],
     }),
   });
   if (res.status === 401 || res.status === 403) {

@@ -4,3 +4,41 @@
 
 /* Simple container width */
 .container-narrow { max-width: 28rem; }
+
+/* iOS Safari: native date/time inputs can render too thin.
+   Normalize height and appearance so it matches Tailwind's py-1.5 controls. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"] {
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit; /* avoid iOS using a smaller internal font */
+  line-height: 1.25; /* slightly tighter so value sits more like text inputs */
+  padding-top: 0.375rem; /* py-1.5 top */
+  padding-bottom: 0.375rem; /* py-1.5 bottom */
+  min-height: 2.25rem; /* roughly h-9 to match other inputs */
+}
+
+/* Ensure the internal value box in WebKit has room */
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value,
+input[type="month"]::-webkit-date-and-time-value {
+  min-height: 1.5em;
+  text-align: left;
+  line-height: 1.2; /* avoid overly centered look in iOS */
+  padding-top: 0.1em; /* nudge baseline slightly down to match other inputs */
+}
+
+/* Tweak the calendar icon box so added padding doesn't misalign it */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  padding: 0;
+  margin: 0;
+}
+
+/* On iOS, the inner spin/clear buttons can shift vertical alignment; hide them for date */
+input[type="date"]::-webkit-clear-button,
+input[type="date"]::-webkit-inner-spin-button {
+  display: none;
+}
